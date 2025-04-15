@@ -1,13 +1,13 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { authService } from '../services/api';
-import { User, LoginCredentials, RegisterCredentials } from '../types';
+import { User, LoginCredentials, RegisterCredentials, RegisterResponse } from '../types';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
   login: (credentials: LoginCredentials) => Promise<User>;
-  register: (credentials: RegisterCredentials) => Promise<User>;
+  register: (credentials: RegisterCredentials) => Promise<RegisterResponse>;
   logout: () => void;
 }
 
@@ -23,14 +23,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if user is already logged in
+    const userJson = localStorage.getItem('user');
     const token = localStorage.getItem('token');
-    if (token) {
-      // You could verify the token here or fetch user data
-      setUser({ mail: '', name: '', role: 'user', token });
+  
+    if (userJson && token) {
+      const parsedUser = JSON.parse(userJson);
+      setUser({ ...parsedUser, token });
     }
+  
     setLoading(false);
   }, []);
+  
 
   const login = async (credentials: LoginCredentials): Promise<User> => {
     try {
@@ -50,8 +53,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setError(null);
       const response = await authService.register(credentials);
-      if (response.data) {
-        return response.data;
+      if (response.user) {
+        return response.user;
       }
       throw new Error('Registration failed');
     } catch (err: any) {

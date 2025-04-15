@@ -1,24 +1,29 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { 
-  User, 
-  LoginCredentials, 
-  RegisterCredentials, 
+import {
+  User,
+  LoginCredentials,
+  RegisterCredentials,
   LoginResponse,
   ApiResponse,
   Preference,
-  Schedule
+  Schedule,
+  RegisterResponse
 } from '../types';
 
-// Create an axios instance with default config
+const isDev = import.meta.env.DEV;
+
+const baseURL = isDev
+  ? ''
+  : 'https://guardify.cs.bgu.ac.il';
+
 const api: AxiosInstance = axios.create({
-  baseURL: 'https://localhost:5000',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true // Keep this for session support
+  withCredentials: true,
 });
 
-// Add a request interceptor to add the auth token to requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -27,89 +32,51 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Auth services
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     try {
-      console.log('Login attempt with credentials:', {
-        mail: credentials.mail,
-        password: '********'
-      });
-      
       const response = await api.post<LoginResponse>('/users/login', credentials);
-      
-      console.log('Login response:', {
-        status: response.status,
-        headers: response.headers,
-        data: response.data
-      });
-
       if (!response.data) {
         throw new Error('No data received in login response');
       }
-
-      // Store user data in localStorage
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      
+      localStorage.setItem('token', response.data.token);
       return response.data;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       throw error;
     }
   },
-  
-  register: async (credentials: RegisterCredentials): Promise<ApiResponse<User>> => {
-    const response: AxiosResponse<ApiResponse<User>> = await api.post('/users/register', credentials);
-    return response.data;
+
+  register: async (credentials: RegisterCredentials): Promise<RegisterResponse> => {
+    try {
+      const response: AxiosResponse<RegisterResponse> = await api.post('/users/register', credentials);
+      console.log(response.data.message)
+      return response.data;
+    } catch (error) {
+      console.error('❌ Registration error:', error);
+      throw error;
+    }
   },
-  
+
   logout: (): void => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    console.log('👋 Logged out and cleared local storage.');
   }
 };
-
-// Preferences services
-export const preferencesService = {
-  submitPreferences: async (schedule: number[][]): Promise<ApiResponse<Preference>> => {
-    const response: AxiosResponse<ApiResponse<Preference>> = await api.post('/preferences', { schedule });
+export const userService = {
+  getAll: async (): Promise<User[]> => {
+    const response = await api.get('/users');
     return response.data;
   },
-  
-  getPreferences: async (): Promise<ApiResponse<Preference>> => {
-    const response: AxiosResponse<ApiResponse<Preference>> = await api.get('/preferences');
-    return response.data;
+  givePermission: async (mail: string, role: string): Promise<void> => {
+    await api.post('/users/givePermission', { mail, role });
   }
-};
-
-// Schedule services
-export const scheduleService = {
-  getCurrentSchedule: async (): Promise<ApiResponse<Schedule>> => {
-    const response: AxiosResponse<ApiResponse<Schedule>> = await api.get('/schedule/current');
-    return response.data;
-  },
   
-  getDraftSchedule: async (): Promise<ApiResponse<Schedule>> => {
-    const response: AxiosResponse<ApiResponse<Schedule>> = await api.get('/schedule/draft');
-    return response.data;
-  }
-};
-
-// Admin services (protected routes)
-export const adminService = {
-  generateSchedule: async (): Promise<ApiResponse<Schedule>> => {
-    const response: AxiosResponse<ApiResponse<Schedule>> = await api.post('/schedule/generate');
-    return response.data;
-  },
-  
-  toggleSubmissionPeriod: async (isOpen: boolean): Promise<ApiResponse<{ isOpen: boolean }>> => {
-    const response: AxiosResponse<ApiResponse<{ isOpen: boolean }>> = await api.post('/manage/submission-period', { isOpen });
-    return response.data;
-  }
 };
 
 export default api;

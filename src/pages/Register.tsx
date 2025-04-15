@@ -2,14 +2,14 @@ import React, { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { RegisterCredentials } from '../types';
-import { 
-  Container, 
-  Box, 
-  Typography, 
-  TextField, 
-  Button, 
-  Paper, 
-  Alert 
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  Alert
 } from '@mui/material';
 
 const Register: React.FC = () => {
@@ -18,6 +18,7 @@ const Register: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -25,11 +26,17 @@ const Register: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const credentials: RegisterCredentials = { name, mail, password };
-      await register(credentials);
-      navigate('/login');
+      const response = await register(credentials);
+      console.log(response)
+      if (response.name) {
+        console.log('✅', response.name);
+        navigate('/login');
+      } else {
+        setError('Registration failed. Please try again.');
+      }
     } catch (err: any) {
       setError(err.message || 'Registration failed');
     } finally {
@@ -51,13 +58,13 @@ const Register: React.FC = () => {
           <Typography component="h1" variant="h5" align="center" gutterBottom>
             Register for Guardify
           </Typography>
-          
+
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
-          
+
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <TextField
               margin="normal"

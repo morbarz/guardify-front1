@@ -6,10 +6,14 @@ import MainLayout from './layouts/MainLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import AdminDashboard from './pages/AdminDashboard';
+//import AdminDashboard from './pages/AdminDashboard';
 import PrivateRoute from './components/PrivateRoute';
-import AdminRoute from './components/AdminRoute';
-
+import AdminDashboard from './pages/AdminDashboard';
+import Settings from './pages/settings'
+import MyShifts from './pages/MyShifts'
+import CurrentSchedule from './pages/CurrentSchedule'
+import PastSchedules from './pages/PastSchedules'
+import HomeRedirect from './pages/HomeRedirect';
 // Create a theme
 const theme = createTheme({
   palette: {
@@ -21,7 +25,15 @@ const theme = createTheme({
     },
   },
 });
+/*
+<Route path="/" element={<HomeRedirect />} /> -בודק אם אדמין או משתמש מסוג אחר ואז יודע לאן להפנות
+<Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} /> - אם לא אדמין ינתב לכאן
+<Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} /> -אם אדמין ינתב לכאן
 
+
+
+
+*/
 const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
@@ -32,8 +44,12 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/" element={<HomeRedirect />} />
+              <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+              <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />              <Route path="/my-shifts" element={<MyShifts />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/my-schedule" element={<CurrentSchedule />} />
+              <Route path="/past-schedules" element={<PastSchedules />} />
             </Routes>
           </MainLayout>
         </Router>

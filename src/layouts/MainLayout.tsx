@@ -1,5 +1,16 @@
-import React, { ReactNode } from 'react';
-import { Box, AppBar, Toolbar, Typography, Button, Container } from '@mui/material';
+import React, { ReactNode, useState } from 'react';
+import {
+  Box,
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Container,
+  IconButton,
+  Menu,
+  MenuItem
+} from '@mui/material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -11,6 +22,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = (path?: string) => {
+    setAnchorEl(null);
+    if (path) navigate(path);
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -20,15 +43,30 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Guardify
-          </Typography>
+    <Typography
+      variant="h6"
+      component="div"
+      sx={{ flexGrow: 1, cursor: 'pointer' }}
+      onClick={() => navigate('/')}
+    >
+      Guardify
+    </Typography>
+
           {user ? (
             <>
               <Typography variant="body1" sx={{ mr: 2 }}>
-                {user.name}
+                המשתמש המחובר הוא: {user.name}
               </Typography>
-              <Button color="inherit" onClick={handleLogout}>
+              <IconButton color="inherit" onClick={handleMenuClick}>
+                <MoreVertIcon />
+              </IconButton>
+              <Menu anchorEl={anchorEl} open={open} onClose={() => handleMenuClose()}>
+                <MenuItem onClick={() => handleMenuClose('/my-shifts')}>המשמרות שלי</MenuItem>
+                <MenuItem onClick={() => handleMenuClose('/settings')}>הגדרות</MenuItem>
+                <MenuItem onClick={() => handleMenuClose('/my-schedule')}>סידור העבודה שלי</MenuItem>
+                <MenuItem onClick={() => handleMenuClose('/past-schedules')}>סידורים קודמים</MenuItem>
+              </Menu>
+              <Button color="inherit" onClick={handleLogout} sx={{ ml: 2 }}>
                 Logout
               </Button>
             </>

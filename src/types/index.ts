@@ -3,7 +3,7 @@ export interface User {
     _id?: string;
     name: string;
     mail: string;
-    role: 'user' | 'admin';
+    role: 'guard' | 'bakar' | 'shift_manager'|'admin';
     token?: string;
   }
   
@@ -66,7 +66,13 @@ export interface User {
     message?: string;
     error?: string;
   }
-  
+  export interface RegisterResponse {
+    mail: string;
+    name: string;
+    password: string;
+    role:string;
+    id:string
+  }
   // Shift types
   export type ShiftType = 'morning' | 'noon' | 'night';
   export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
