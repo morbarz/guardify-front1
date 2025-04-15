@@ -4,9 +4,10 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
+pnpm-debug.log*c
 lerna-debug.log*
-
+package-lock.json
+package.json
 node_modules
 dist
 dist-ssr
