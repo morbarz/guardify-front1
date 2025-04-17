@@ -6,14 +6,19 @@ import MainLayout from './layouts/MainLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-//import AdminDashboard from './pages/AdminDashboard';
-import PrivateRoute from './components/PrivateRoute';
 import AdminDashboard from './pages/AdminDashboard';
-import Settings from './pages/settings'
-import MyShifts from './pages/MyShifts'
-import CurrentSchedule from './pages/CurrentSchedule'
-import PastSchedules from './pages/PastSchedules'
+import Settings from './pages/settings';
+import MyShifts from './pages/MyShifts';
+import CurrentSchedule from './pages/CurrentSchedule';
+import PastSchedules from './pages/PastSchedules';
 import HomeRedirect from './pages/HomeRedirect';
+import AdminSubmissionStatus from './pages/AdminSubmissionStatus';
+import SubmitPreferences from './pages/SubmitPreferences';
+import AdminPreferenceList from './components/AdminPreferenceList';
+
+import PrivateRoute from './components/PrivateRoute';
+import AdminRoute from './components/AdminRoute'; // 👈 ודא שהקומפוננטה קיימת
+
 // Create a theme
 const theme = createTheme({
   palette: {
@@ -25,15 +30,14 @@ const theme = createTheme({
     },
   },
 });
+
 /*
-<Route path="/" element={<HomeRedirect />} /> -בודק אם אדמין או משתמש מסוג אחר ואז יודע לאן להפנות
-<Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} /> - אם לא אדמין ינתב לכאן
-<Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} /> -אם אדמין ינתב לכאן
-
-
-
-
+📌 הסבר על ראוטים מרכזיים:
+- "/" → HomeRedirect מחליט אם להפנות ל-admin או dashboard
+- "/dashboard" → משתמש רגיל
+- "/admin" → אדמין בלבד
 */
+
 const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
@@ -42,14 +46,23 @@ const App: React.FC = () => {
         <Router>
           <MainLayout>
             <Routes>
+              {/* Public Routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/" element={<HomeRedirect />} />
+
+              {/* Protected for all authenticated users */}
               <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-              <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />              <Route path="/my-shifts" element={<MyShifts />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/my-schedule" element={<CurrentSchedule />} />
-              <Route path="/past-schedules" element={<PastSchedules />} />
+              <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+              <Route path="/my-shifts" element={<PrivateRoute><MyShifts /></PrivateRoute>} />
+              <Route path="/my-schedule" element={<PrivateRoute><CurrentSchedule /></PrivateRoute>} />
+              <Route path="/past-schedules" element={<PrivateRoute><PastSchedules /></PrivateRoute>} />
+              <Route path="/submit-preferences" element={<PrivateRoute><SubmitPreferences /></PrivateRoute>} />
+
+              {/* Admin-only Routes */}
+              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin/submission-status" element={<AdminRoute><AdminSubmissionStatus /></AdminRoute>} />
+              <Route path="/admin/submitted-preferences" element={<AdminRoute><AdminPreferenceList /></AdminRoute>} />
             </Routes>
           </MainLayout>
         </Router>

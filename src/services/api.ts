@@ -75,8 +75,48 @@ export const userService = {
   },
   givePermission: async (mail: string, role: string): Promise<void> => {
     await api.post('/users/givePermission', { mail, role });
-  }
   
+  },
+
 };
+export const preferencesService = {
+
+  getPreferences: async (): Promise<{ preferences: { schedule: string[][] } }> => {
+    const response = await api.get('/preferences/get-preferences');
+    return response.data;
+  },
+  submitPreferences: async (schedule: { day: number; shiftIds: string[] }[]): Promise<any> => {
+    const response = await api.post('/preferences/submit', { preferences: schedule });
+    return response.data;
+  }
+};
+  export const adminService = { 
+    toggleSubmissionPeriod: async (
+      isOpen: boolean,
+      scheduleStartDate?: string,
+      scheduleEndDate?: string
+    ): Promise<{ isOpen: boolean }> => {
+      const body: any = { isOpen };
+    
+      // אם פותחים – נשלח תאריכים
+      if (isOpen && scheduleStartDate && scheduleEndDate) {
+        body.scheduleStartDate = scheduleStartDate;
+        body.scheduleEndDate = scheduleEndDate;
+      }
+    
+      const response = await api.post('/manage/submission-period', body);
+      return response.data;
+    },
+    getSubmissionStatus: async (): Promise<{
+      isOpen: boolean;
+      scheduleStartDate?: string;
+      scheduleEndDate?: string;
+    }> => {
+      const response = await api.get('/manage/submission-period');
+      return response.data;
+    }
+    
+  }
+
 
 export default api;

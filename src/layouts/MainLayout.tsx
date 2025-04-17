@@ -43,29 +43,47 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="static">
         <Toolbar>
-    <Typography
-      variant="h6"
-      component="div"
-      sx={{ flexGrow: 1, cursor: 'pointer' }}
-      onClick={() => navigate('/')}
-    >
-      Guardify
-    </Typography>
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{ flexGrow: 1, cursor: 'pointer' }}
+            onClick={() => navigate('/')}
+          >
+            Guardify
+          </Typography>
 
           {user ? (
             <>
               <Typography variant="body1" sx={{ mr: 2 }}>
                 המשתמש המחובר הוא: {user.name}
               </Typography>
+
               <IconButton color="inherit" onClick={handleMenuClick}>
                 <MoreVertIcon />
               </IconButton>
+
               <Menu anchorEl={anchorEl} open={open} onClose={() => handleMenuClose()}>
-                <MenuItem onClick={() => handleMenuClose('/my-shifts')}>המשמרות שלי</MenuItem>
-                <MenuItem onClick={() => handleMenuClose('/settings')}>הגדרות</MenuItem>
-                <MenuItem onClick={() => handleMenuClose('/my-schedule')}>סידור העבודה שלי</MenuItem>
-                <MenuItem onClick={() => handleMenuClose('/past-schedules')}>סידורים קודמים</MenuItem>
+                {/* תפריט מותאם לפי תפקיד */}
+                {user.role === 'admin' ? (
+                  <>
+                    <MenuItem onClick={() => handleMenuClose('/admin')}>Admin Dashboard</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/admin/submission-status')}>Submission Status</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/settings')}>Settings</MenuItem>
+                  </>
+                ) : (
+                  <>
+                    <MenuItem onClick={() => handleMenuClose('/my-shifts')}>המשמרות שלי</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/submit-preferences')}>  הגשת משמרות </MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/settings')}>הגדרות</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/my-schedule')}>סידור העבודה שלי</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/past-schedules')}>סידורים קודמים</MenuItem>
+
+
+
+                  </>
+                )}
               </Menu>
+
               <Button color="inherit" onClick={handleLogout} sx={{ ml: 2 }}>
                 Logout
               </Button>
@@ -77,9 +95,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           )}
         </Toolbar>
       </AppBar>
+
       <Container component="main" sx={{ mt: 4, mb: 4, flex: 1 }}>
         {children}
       </Container>
+
       <Box component="footer" sx={{ py: 3, bgcolor: 'background.paper' }}>
         <Container maxWidth="sm">
           <Typography variant="body2" color="text.secondary" align="center">
