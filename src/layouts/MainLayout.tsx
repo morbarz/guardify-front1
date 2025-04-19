@@ -68,12 +68,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   <>
                     <MenuItem onClick={() => handleMenuClose('/admin')}>Admin Dashboard</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/admin/submission-status')}>Submission Status</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/register')}>Regiter New User</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/settings')}>Settings</MenuItem>
                   </>
                 ) : (
                   <>
                     <MenuItem onClick={() => handleMenuClose('/my-shifts')}>המשמרות שלי</MenuItem>
-                    <MenuItem onClick={() => handleMenuClose('/submit-preferences')}>  הגשת משמרות </MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/submit/current')}>  הגשת משמרות </MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/submit/history')}>  היסטוריית הגשות </MenuItem>
+
                     <MenuItem onClick={() => handleMenuClose('/settings')}>הגדרות</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/my-schedule')}>סידור העבודה שלי</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/past-schedules')}>סידורים קודמים</MenuItem>

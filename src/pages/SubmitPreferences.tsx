@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Typography,
-  Alert,
-  Button,
-  Checkbox,
-  FormControlLabel,
-  Paper,
-  Divider
+  Box, Typography, Alert, Button, Checkbox, FormControlLabel,
+  Paper, Divider, Collapse, IconButton
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { preferencesService, adminService } from '../services/api';
 import axios from 'axios';
 
@@ -26,151 +22,129 @@ const SubmitPreferences: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [shiftTypes, setShiftTypes] = useState<ShiftType[]>([]);
   const [preferences, setPreferences] = useState<ShiftPreference[]>([]);
-  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
-  const [submittedData, setSubmittedData] = useState<number[][] | null>(null);
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
-  const [history, setHistory] = useState<number[][][]>([]);
-  const [historyDates, setHistoryDates] = useState<string[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [updating, setUpdating] = useState(false);
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
 
+  // Load user data and preferences on mount
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const loadData = async () => {
       try {
         const statusRes = await adminService.getSubmissionStatus();
         setIsOpen(statusRes.isOpen);
 
-        // Check previous submission
-        try {
-          const existing = await preferencesService.getPreferences();
-          if (existing && existing.preferences?.schedule) {
-            const numericSchedule = existing.preferences.schedule.map((day: any[]) =>
-              day.map((val) => Number(val) || 0)
-            );
-            setAlreadySubmitted(true);
-            setSubmittedData(numericSchedule);
-          }
-        } catch (err: any) {
-          if (err.response?.status !== 404) {
-            setMessage({ type: 'error', text: 'Error checking existing preferences.' });
-            return;
-          }
-        }
-
-        // Get available shifts
         const shiftRes = await axios.get('/users/getAvailableShifts', { withCredentials: true });
         const types: ShiftType[] = shiftRes.data.shiftTypes;
         setShiftTypes(types);
 
+        const historyRes = await axios.get('/preferences/my-submissions', { withCredentials: true });
+        const submissionHistory = historyRes.data?.history ?? [];
+        setHistory(submissionHistory);
+
+        if (statusRes.isOpen && submissionHistory.length > 0) {
+          const latest = submissionHistory[0];
+          if (latest?.schedule) {
+            setPreferences(
+              latest.schedule.map((day: number[], i: number) => ({
+                day: i + 1,
+                shiftIds: day.map((v) => v === 1)
+              }))
+            );
+            setSubmissionId(latest.id);
+            setUpdating(true);
+            return;
+          }
+        }
+
+        // If no existing submission, create empty preferences
         const initialPrefs: ShiftPreference[] = Array.from({ length: 14 }, (_, i) => ({
           day: i + 1,
           shiftIds: Array(types.length).fill(false)
         }));
-
         setPreferences(initialPrefs);
 
-        // Load history if needed
-        if (alreadySubmitted) {
-          const res = await axios.get('/preferences/my-submissions', { withCredentials: true });
-          const clean = res.data.history.map((entry: any) =>
-            entry.schedule.map((day: any[]) => day.map((val) => Number(val) || 0))
-          );
-          setHistory(clean);
-          setHistoryDates(res.data.history.map((e: any) => e.submittedAt));
-        }
-      } catch (err) {
-        setMessage({ type: 'error', text: 'Failed to load data. Please try again later.' });
+      } catch (err: any) {
+        setMessage({ type: 'error', text: 'Error loading data.' });
       }
     };
 
-    fetchInitialData();
-  }, [alreadySubmitted]);
+    loadData();
+  }, []);
 
+  // Toggle a specific checkbox in preferences
   const toggleShift = (day: number, index: number) => {
     setPreferences((prev) =>
       prev.map((entry) =>
         entry.day === day
-          ? {
-              ...entry,
-              shiftIds: entry.shiftIds.map((v, i) => (i === index ? !v : v))
-            }
+          ? { ...entry, shiftIds: entry.shiftIds.map((v, i) => (i === index ? !v : v)) }
           : entry
       )
     );
   };
 
-  const handleSubmit = async () => {
+  // Submit new preferences
+  const handleSave = async () => {
     try {
-      setMessage(null);
-
-      const formattedSchedule = preferences.map((dayPref) => ({
-        day: dayPref.day,
-        shiftIds: dayPref.shiftIds.map((selected) => (selected ? 1 : 0))
+      const formatted = preferences.map((day) => ({
+        day: day.day,
+        shiftIds: day.shiftIds.map((v) => (v ? 1 : 0))
       }));
 
-      await preferencesService.submitPreferences(formattedSchedule);
-      setMessage({ type: 'success', text: 'Preferences submitted successfully!' });
-      setAlreadySubmitted(true);
-      setSubmittedData(formattedSchedule.map((p) => p.shiftIds));
+      await preferencesService.submitPreferences(formatted);
+      setMessage({ type: 'success', text: 'Preferences submitted.' });
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Submission failed.' });
+      setMessage({ type: 'error', text: err.message || 'Save failed.' });
     }
   };
 
-  if (!isOpen) {
-    return (
-      <Box sx={{ p: 4 }}>
-        <Alert severity="info">Submission period is currently closed.</Alert>
-      </Box>
-    );
-  }
+  // Update existing preferences
+  const handleUpdate = async () => {
+    try {
+      if (!submissionId) {
+        setMessage({ type: 'error', text: 'Cannot update – no submission ID found.' });
+        return;
+      }
 
-  if (alreadySubmitted && submittedData) {
-    return (
-      <Box sx={{ p: 4 }}>
-        <Alert severity="success" sx={{ mb: 2 }}>
-          You have already submitted your preferences. Thank you!
-        </Alert>
+      const formatted = preferences.map((day) => ({
+        day: day.day,
+        shiftIds: day.shiftIds.map((v) => (v ? 1 : 0))
+      }));
 
-        <Typography variant="h6" gutterBottom>
-          Your Submitted Preferences:
-        </Typography>
+      await preferencesService.updatePreference(submissionId, formatted);
+      setMessage({ type: 'success', text: 'Preferences updated.' });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Update failed.' });
+    }
+  };
 
-        {submittedData.map((shifts, i) => (
-          <Typography key={i} variant="body2">
-            Day {i + 1}:{' '}
-            {shifts
-              .map((val, idx) => (val === 1 ? shiftTypes[idx]?.type : null))
-              .filter(Boolean)
-              .join(', ') || 'No shifts selected'}
-          </Typography>
-        ))}
+  // Delete current submission
+  const handleDelete = async () => {
+    try {
+      if (!submissionId) {
+        setMessage({ type: 'error', text: 'No submission to delete.' });
+        return;
+      }
 
-        {history.length > 1 && (
-          <>
-            <Divider sx={{ my: 3 }} />
-            <Typography variant="h6" gutterBottom>
-              Previous Submissions
-            </Typography>
-            {history.slice(1).map((submission, idx) => (
-              <Paper key={idx} elevation={1} sx={{ p: 2, mt: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Submitted at: {new Date(historyDates[idx + 1]).toLocaleString()}
-                </Typography>
-                {submission.map((shifts, i) => (
-                  <Typography key={i} variant="body2">
-                    Day {i + 1}:{' '}
-                    {shifts
-                      .map((val, j) => (val === 1 ? shiftTypes[j]?.type : null))
-                      .filter(Boolean)
-                      .join(', ') || 'No shifts selected'}
-                  </Typography>
-                ))}
-              </Paper>
-            ))}
-          </>
-        )}
-      </Box>
-    );
-  }
+      await preferencesService.deletePreference(submissionId);
+      setMessage({ type: 'success', text: 'Submission deleted successfully.' });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Delete failed.' });
+    }
+  };
+
+  // Copy a previous submission into the current state
+  const handleCopy = (index: number) => {
+    const copy = history[index]?.schedule;
+    if (copy) {
+      const newPrefs = copy.map((day: number[], i: number) => ({
+        day: i + 1,
+        shiftIds: day.map((v) => v === 1)
+      }));
+      setPreferences(newPrefs);
+    }
+  };
 
   return (
     <Box sx={{ p: 4 }}>
@@ -178,33 +152,85 @@ const SubmitPreferences: React.FC = () => {
         Submit Your Shift Preferences
       </Typography>
 
-      {message && (
-        <Alert severity={message.type} sx={{ mb: 2 }}>
-          {message.text}
+      {message && <Alert severity={message.type} sx={{ mb: 2 }}>{message.text}</Alert>}
+
+      {isOpen ? (
+        <>
+          {preferences.map((dayPref) => (
+            <Paper key={dayPref.day} elevation={2} sx={{ p: 2, mb: 2 }}>
+              <Typography variant="h6">Day {dayPref.day}</Typography>
+              {shiftTypes.map((shift, index) => (
+                <FormControlLabel
+                  key={shift.number}
+                  control={
+                    <Checkbox
+                      checked={dayPref.shiftIds[index]}
+                      onChange={() => toggleShift(dayPref.day, index)}
+                    />
+                  }
+                  label={shift.type}
+                />
+              ))}
+            </Paper>
+          ))}
+
+          {/* Show the correct button depending on mode */}
+          {updating ? (
+            <>
+              <Button variant="contained" color="primary" onClick={handleUpdate} sx={{ mr: 2 }}>
+                Update Preferences
+              </Button>
+              <Button variant="outlined" color="error" onClick={handleDelete}>
+                Delete Submission
+              </Button>
+            </>
+          ) : (
+            <Button variant="contained" color="primary" onClick={handleSave}>
+              Submit Preferences
+            </Button>
+          )}
+        </>
+      ) : (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Submission period is currently closed.
         </Alert>
       )}
 
-      {preferences.map((dayPref) => (
-        <Paper key={dayPref.day} elevation={2} sx={{ p: 2, mb: 2 }}>
-          <Typography variant="h6">Day {dayPref.day}</Typography>
-          {shiftTypes.map((shift, index) => (
-            <FormControlLabel
-              key={shift.number}
-              control={
-                <Checkbox
-                  checked={dayPref.shiftIds[index]}
-                  onChange={() => toggleShift(dayPref.day, index)}
-                />
-              }
-              label={shift.type}
-            />
+      {/* Previous Submissions */}
+      {history.length > 0 && (
+        <Box mt={4}>
+          <Divider sx={{ mb: 3 }} />
+          <Typography variant="h6" gutterBottom>
+            Previous Submissions
+          </Typography>
+          {history.map((entry, i) => (
+            <Paper key={i} sx={{ mb: 2, p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Submitted at: {new Date(entry.submittedAt).toLocaleString()}
+                </Typography>
+                <Box>
+                  <IconButton onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}>
+                    {expandedIndex === i ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  </IconButton>
+                  <Button size="small" onClick={() => handleCopy(i)}>Copy</Button>
+                </Box>
+              </Box>
+              <Collapse in={expandedIndex === i}>
+                {entry.schedule.map((day: number[], index: number) => (
+                  <Typography key={index} variant="body2">
+                    Day {index + 1}:{' '}
+                    {day
+                      .map((v, j) => (v === 1 ? shiftTypes[j]?.type : null))
+                      .filter(Boolean)
+                      .join(', ') || 'No shifts selected'}
+                  </Typography>
+                ))}
+              </Collapse>
+            </Paper>
           ))}
-        </Paper>
-      ))}
-
-      <Button variant="contained" onClick={handleSubmit}>
-        Submit Preferences
-      </Button>
+        </Box>
+      )}
     </Box>
   );
 };

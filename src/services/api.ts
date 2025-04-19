@@ -88,7 +88,42 @@ export const preferencesService = {
   submitPreferences: async (schedule: { day: number; shiftIds: string[] }[]): Promise<any> => {
     const response = await api.post('/preferences/submit', { preferences: schedule });
     return response.data;
-  }
+  },
+   // ✅ Get submission history
+   getSubmissionHistory: async (): Promise<any> => {
+    const response = await api.get('/preferences/my-submissions');
+    return response.data;
+  },
+
+  // ✅ Delete submission by ID
+  deletePreference: async (
+    id: string
+  ): Promise<any> => {
+    const response = await api.delete(`/preferences/delete/${id}`);
+    return response.data;
+  },
+
+  // ✅ Clone previous submission
+  clonePreference: async (id: string): Promise<any> => {
+    const response = await api.post(`/preferences/clone/${id}`);
+    return response.data;
+  },
+
+  // ✅ Update existing submission
+  updatePreference: async (
+    id: string,
+    schedule: { day: number; shiftIds: number[] }[]
+  ): Promise<any> => {
+    const response = await api.put(`/preferences/update/${id}`, { preferences: schedule });
+    return response.data;
+  },
+
+  // ✅ Admin: get all submitted preferences
+  getAllPreferences: async (): Promise<any> => {
+    const response = await api.get('/preferences/all');
+    return response.data;
+  },
+
 };
   export const adminService = { 
     toggleSubmissionPeriod: async (

@@ -15,6 +15,9 @@ import HomeRedirect from './pages/HomeRedirect';
 import AdminSubmissionStatus from './pages/AdminSubmissionStatus';
 import SubmitPreferences from './pages/SubmitPreferences';
 import AdminPreferenceList from './components/AdminPreferenceList';
+import CurrentSubmission from './pages/CurrentSubmission';
+import SubmissionHistory from './pages/SubmissionHistory';
+import Navigation from './components/Navigation';
 
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute'; // 👈 ודא שהקומפוננטה קיימת
@@ -48,7 +51,7 @@ const App: React.FC = () => {
             <Routes>
               {/* Public Routes */}
               <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <Route path="/register" element={<AdminRoute><Register /></AdminRoute>} />
               <Route path="/" element={<HomeRedirect />} />
 
               {/* Protected for all authenticated users */}
@@ -58,6 +61,8 @@ const App: React.FC = () => {
               <Route path="/my-schedule" element={<PrivateRoute><CurrentSchedule /></PrivateRoute>} />
               <Route path="/past-schedules" element={<PrivateRoute><PastSchedules /></PrivateRoute>} />
               <Route path="/submit-preferences" element={<PrivateRoute><SubmitPreferences /></PrivateRoute>} />
+              <Route path="/submit/current" element={<PrivateRoute><CurrentSubmission /></PrivateRoute>} />
+              <Route path="/submit/history" element={<PrivateRoute><SubmissionHistory /></PrivateRoute>} />
 
               {/* Admin-only Routes */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
