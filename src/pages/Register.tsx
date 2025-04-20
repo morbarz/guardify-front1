@@ -31,8 +31,9 @@ const Register: React.FC = () => {
       const credentials: RegisterCredentials = { name, mail, password };
       const response = await register(credentials);
       console.log(response)
-      if (response.name) {
-        console.log('✅', response.name);
+      if (response.user.name) {
+        console.log('✅', response.user.name);
+      
         navigate('/login');
       } else {
         setError('Registration failed. Please try again.');

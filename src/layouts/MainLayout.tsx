@@ -70,6 +70,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     <MenuItem onClick={() => handleMenuClose('/admin/submission-status')}>Submission Status</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/register')}>Regiter New User</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/settings')}>Settings</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/admin/schedules')}>All schedules</MenuItem>
                   </>
                 ) : (
                   <>

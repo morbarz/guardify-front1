@@ -84,20 +84,21 @@ const SubmitPreferences: React.FC = () => {
     );
   };
 
-  // Submit new preferences
   const handleSave = async () => {
     try {
       const formatted = preferences.map((day) => ({
         day: day.day,
-        shiftIds: day.shiftIds.map((v) => (v ? 1 : 0))
+        shiftIds: day.shiftIds.map((v) => v ? '1' : '0')
       }));
-
+  
       await preferencesService.submitPreferences(formatted);
       setMessage({ type: 'success', text: 'Preferences submitted.' });
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Save failed.' });
     }
   };
+  
+
 
   // Update existing preferences
   const handleUpdate = async () => {

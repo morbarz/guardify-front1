@@ -25,15 +25,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const userJson = localStorage.getItem('user');
     const token = localStorage.getItem('token');
-  
+
     if (userJson && token) {
       const parsedUser = JSON.parse(userJson);
       setUser({ ...parsedUser, token });
     }
-  
+
     setLoading(false);
   }, []);
-  
 
   const login = async (credentials: LoginCredentials): Promise<User> => {
     try {
@@ -41,6 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { user, token } = await authService.login(credentials);
       setUser(user);
       localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       return user;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Login failed';
@@ -49,14 +49,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (credentials: RegisterCredentials): Promise<User> => {
+  const register = async (credentials: RegisterCredentials): Promise<RegisterResponse> => {
     try {
       setError(null);
       const response = await authService.register(credentials);
-      if (response.user) {
-        return response.user;
+
+      if (response && response.user) {
+        // שמור את המשתמש והטוקן אם קיים
+        setUser(response.user);
+        if (response.user.token) {
+          localStorage.setItem('token', response.user.token);
+        }
+        localStorage.setItem('user', JSON.stringify(response.user));
       }
-      throw new Error('Registration failed');
+
+      return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Registration failed';
       setError(errorMessage);
@@ -67,6 +74,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = (): void => {
     authService.logout();
     setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   return (

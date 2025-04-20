@@ -88,25 +88,28 @@ const CurrentSubmission: React.FC = () => {
     );
   };
 
-  // שמירה או עדכון של ההגשה
   const handleSubmit = async () => {
     try {
       const formatted = preferences.map((day) => ({
         day: day.day,
-        shiftIds: day.shiftIds.map((v) => (v ? 1 : 0))
+        shiftIds: updating
+          ? day.shiftIds.map((v) => (v ? 1 : 0))       // ⬅️ למספרים עבור update
+          : day.shiftIds.map((v) => (v ? '1' : '0'))   // ⬅️ למחרוזות עבור submit
       }));
-
+  
       if (updating) {
-        await preferencesService.updatePreference(submissionId!, formatted);
+        await preferencesService.updatePreference(submissionId!, formatted as { day: number; shiftIds: number[] }[]);
         setMessage({ type: 'success', text: 'Preferences updated successfully.' });
       } else {
-        await preferencesService.submitPreferences(formatted);
+        await preferencesService.submitPreferences(formatted as { day: number; shiftIds: string[] }[]);
         setMessage({ type: 'success', text: 'Preferences submitted successfully.' });
       }
     } catch (err: any) {
       setMessage({ type: 'error', text: err.message || 'Submission failed.' });
     }
   };
+  
+
 
   // מחיקת ההגשה הנוכחית
   const handleDelete = async () => {

@@ -17,8 +17,8 @@ import SubmitPreferences from './pages/SubmitPreferences';
 import AdminPreferenceList from './components/AdminPreferenceList';
 import CurrentSubmission from './pages/CurrentSubmission';
 import SubmissionHistory from './pages/SubmissionHistory';
-import Navigation from './components/Navigation';
-
+import ScheduleResultPage from './pages/ScheduleResultPage';
+import AllSchedulesPage from './pages/AllSchedulePage';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute'; // 👈 ודא שהקומפוננטה קיימת
 
@@ -68,6 +68,9 @@ const App: React.FC = () => {
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/submission-status" element={<AdminRoute><AdminSubmissionStatus /></AdminRoute>} />
               <Route path="/admin/submitted-preferences" element={<AdminRoute><AdminPreferenceList /></AdminRoute>} />
+              <Route path="/admin/schedule/:id" element={<AdminRoute><ScheduleResultPage /></AdminRoute>} />
+              <Route path="/admin/schedules" element={<AdminRoute><AllSchedulesPage /></AdminRoute>} />
+
             </Routes>
           </MainLayout>
         </Router>

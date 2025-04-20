@@ -4,8 +4,7 @@ import {
   LoginCredentials,
   RegisterCredentials,
   LoginResponse,
-  ApiResponse,
-  Preference,
+
   Schedule,
   RegisterResponse
 } from '../types';
@@ -149,7 +148,34 @@ export const preferencesService = {
     }> => {
       const response = await api.get('/manage/submission-period');
       return response.data;
+    },
+    createSchedule: async (): Promise<{
+      success: boolean;
+      message: string;
+      scheduleId: string;
+      schedule: Schedule;
+    }> => {
+      try {
+        const response = await api.get('/schedule/createRandom');
+        return response.data;
+      } catch (error) {
+        console.error('❌ Schedule creation failed:', error);
+        throw error;
+      }
+    },
+    getAllGeneratedSchedules: async (): Promise<{
+      success: boolean;
+      schedules: any[];
+    }> => {
+      const res = await api.get('/schedule/all');
+      return res.data;
+    },
+    convertEmailsToNames: async (schedule: any): Promise<any> => {
+      const res = await api.post('/schedule/convert-emails-to-names', { schedule });
+      return res.data;
     }
+    
+    
     
   }
 
