@@ -79,13 +79,13 @@ const AdminDashboard: React.FC = () => {
         </Button>
       </Box>
 
-      {/* 👤 ניהול משתמשים */}
+      {/* 👤 ניהול משתמשים
       <Paper elevation={3} sx={{ mt: 4, p: 2 }}>
         <Typography variant="h6" gutterBottom>
           Manage Users
         </Typography>
         <UserRoleManager />
-      </Paper>
+      </Paper> */}
 
       {/* 📋 הגשות המשתמשים */}
       <Paper elevation={3} sx={{ mt: 4, p: 2 }}>

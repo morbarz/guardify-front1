@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Typography, Select, MenuItem, Button, Snackbar, Alert,
-  Box, TextField, InputAdornment, Chip
+  Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Select, MenuItem, Button, Snackbar, Alert, Dialog, DialogTitle, DialogContent,
+  DialogActions, TextField, Box, InputAdornment, Chip
 } from '@mui/material';
-import { userService } from '../services/api';
+import { adminService, userService } from '../services/api';
 import { User } from '../types';
 import {
+  LockReset as LockResetIcon,
   Save as SaveIcon,
   Search as SearchIcon
 } from '@mui/icons-material';
@@ -21,7 +22,7 @@ const roleColors: Record<string, 'default' | 'primary' | 'secondary' | 'success'
   admin: 'error'
 };
 
-const UserRoleManager: React.FC = () => {
+const UserRolesPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<{ [mail: string]: string }>({});
@@ -32,6 +33,12 @@ const UserRoleManager: React.FC = () => {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastSeverity, setToastSeverity] = useState<'success' | 'error'>('success');
+
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [selectedUserMail, setSelectedUserMail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -84,6 +91,43 @@ const UserRoleManager: React.FC = () => {
     }
   };
 
+  const openPasswordDialog = (mail: string) => {
+    setSelectedUserMail(mail);
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError(null);
+    setPasswordDialogOpen(true);
+  };
+
+  const closePasswordDialog = () => {
+    setPasswordDialogOpen(false);
+    setPasswordError(null);
+  };
+
+  const handlePasswordChangeSubmit = async () => {
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return;
+    }
+
+    try {
+      await adminService.adminChangePassword(selectedUserMail, newPassword);
+      setToastMessage(`Password changed for ${selectedUserMail}`);
+      setToastSeverity('success');
+      closePasswordDialog();
+    } catch (err: any) {
+      setToastMessage(err.message || 'Failed to change password');
+      setToastSeverity('error');
+    } finally {
+      setToastOpen(true);
+    }
+  };
+
   const handleToastClose = () => {
     setToastOpen(false);
   };
@@ -92,9 +136,13 @@ const UserRoleManager: React.FC = () => {
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
-    <Box>
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Manage User Roles
+      </Typography>
+
       {/* Search Bar */}
-      <Box my={2}>
+      <Box my={3}>
         <TextField
           placeholder="Search by name or email"
           variant="outlined"
@@ -111,8 +159,8 @@ const UserRoleManager: React.FC = () => {
         />
       </Box>
 
-      {/* Table of Users */}
-      <TableContainer component={Paper} sx={{ mt: 2 }}>
+      {/* Users Table */}
+      <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
@@ -121,6 +169,7 @@ const UserRoleManager: React.FC = () => {
               <TableCell><strong>Current Role</strong></TableCell>
               <TableCell><strong>Change Role</strong></TableCell>
               <TableCell><strong>Update</strong></TableCell>
+              <TableCell><strong>Password</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -147,11 +196,22 @@ const UserRoleManager: React.FC = () => {
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => handleSubmit(user.mail)}
-                    startIcon={<SaveIcon />}
                     size="small"
+                    startIcon={<SaveIcon />}
+                    onClick={() => handleSubmit(user.mail)}
                   >
                     Update
+                  </Button>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    size="small"
+                    startIcon={<LockResetIcon />}
+                    onClick={() => openPasswordDialog(user.mail)}
+                  >
+                    Reset
                   </Button>
                 </TableCell>
               </TableRow>
@@ -160,7 +220,39 @@ const UserRoleManager: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* Snackbar Notification */}
+      {/* Password Dialog */}
+      <Dialog open={passwordDialogOpen} onClose={closePasswordDialog}>
+        <DialogTitle>Change Password</DialogTitle>
+        <DialogContent>
+          <Box display="flex" flexDirection="column" gap={2} mt={1}>
+            <TextField
+              label="New Password"
+              type="password"
+              fullWidth
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              error={!!passwordError}
+            />
+            <TextField
+              label="Confirm Password"
+              type="password"
+              fullWidth
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              error={!!passwordError}
+              helperText={passwordError}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closePasswordDialog}>Cancel</Button>
+          <Button onClick={handlePasswordChangeSubmit} variant="contained" color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Feedback Snackbar */}
       <Snackbar
         open={toastOpen}
         autoHideDuration={4000}
@@ -171,8 +263,8 @@ const UserRoleManager: React.FC = () => {
           {toastMessage}
         </Alert>
       </Snackbar>
-    </Box>
+    </Container>
   );
 };
 
-export default UserRoleManager;
+export default UserRolesPage;

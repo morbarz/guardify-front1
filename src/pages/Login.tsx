@@ -32,7 +32,7 @@ const Login: React.FC = () => {
       console.log('Sending login request to server...');
       await login(credentials);
       console.log('Login successful, redirecting to dashboard...');
-      navigate('/');
+      navigate('/redirect');
     } catch (err: unknown) {
       const error = err as { 
         message?: string; 
@@ -136,13 +136,7 @@ const Login: React.FC = () => {
             >
               {isLoading ? 'Logging in...' : 'Login'}
             </Button>
-            <Box sx={{ textAlign: 'center' }}>
-              <Link to="/register" style={{ textDecoration: 'none' }}>
-                <Typography variant="body2" color="primary">
-                  Don't have an account? Register
-                </Typography>
-              </Link>
-            </Box>
+
           </Box>
         </Paper>
       </Box>

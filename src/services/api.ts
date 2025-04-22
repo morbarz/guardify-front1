@@ -4,7 +4,8 @@ import {
   LoginCredentials,
   RegisterCredentials,
   LoginResponse,
-
+  ApiResponse,
+  Preference,
   Schedule,
   RegisterResponse
 } from '../types';
@@ -149,89 +150,14 @@ export const preferencesService = {
       const response = await api.get('/manage/submission-period');
       return response.data;
     },
-    createSchedule: async (): Promise<{
-      success: boolean;
-      message: string;
-      scheduleId: string;
-      schedule: Schedule;
-    }> => {
-      try {
-        const response = await api.get('/schedule/createRandom');
-        return response.data;
-      } catch (error) {
-        console.error('❌ Schedule creation failed:', error);
-        throw error;
-      }
-    },
-    getAllGeneratedSchedules: async (): Promise<{
-      success: boolean;
-      schedules: any[];
-    }> => {
-      const res = await api.get('/schedule/all');
-      return res.data;
-    },
-    convertEmailsToNames: async (schedule: any): Promise<any> => {
-      const res = await api.post('/schedule/convert-emails-to-names', { schedule });
-      return res.data;
-    },
-    getUnassignedUsers: async (scheduleId: string) => {
-      try {
-        // First get unassigned users
-        const response = await api.get(`/admin/schedules/${scheduleId}/unassigned-users`);
-        
-        // Then get their preferences
-        const preferencesResponse = await api.get('/preferences/all');
-        
-        // Combine user data with their preferences
-        const usersWithPreferences = response.data.users.map((user: any) => {
-          const userPreferences = preferencesResponse.data.preferences.find(
-            (p: any) => p.email === user.email
-          );
-          return {
-            ...user,
-            preferences: userPreferences?.schedule || []
-          };
-        });
-
-        return {
-          ...response.data,
-          users: usersWithPreferences
-        };
-      } catch (error: any) {
-        console.error('Failed to get unassigned users:', error);
-        throw new Error(error.response?.data?.message || 'Failed to get unassigned users');
-      }
-    },
-    updateScheduleWithManualAssignments: async (scheduleId: string, data: { schedule: any; unassignedUsers: any[] }) => {
-      try {
-        const response = await api.put(`/admin/schedules/${scheduleId}/manual-assignments`, data);
-        return response.data;
-      } catch (error: any) {
-        console.error('Failed to update schedule:', error);
-        throw new Error(error.response?.data?.message || 'Failed to update schedule');
-      }
-    },
-    getLastSubmittedSchedule: async (): Promise<{
-      success: boolean;
-      schedule: Schedule | null;
-      message?: string;
-    }> => {
-      try {
-        const response = await api.get('/schedule/last-submited');
-        return {
-          success: true,
-          schedule: response.data
-        };
-      } catch (error: any) {
-        console.error('❌ Failed to get last submitted schedule:', error);
-        return {
-          success: false,
-          schedule: null,
-          message: error.response?.data?.message || 'Failed to load schedule'
-        };
-      }
+    adminChangePassword: async (mail: string, newPassword: string): Promise<any> => {
+      const response = await api.post('/manage/change-password', {
+        mail,
+        newPassword,
+      });
+      return response.data;
     }
   }
-
+    
 
 export default api;

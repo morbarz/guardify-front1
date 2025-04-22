@@ -47,7 +47,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             variant="h6"
             component="div"
             sx={{ flexGrow: 1, cursor: 'pointer' }}
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/redirect')}
           >
             Guardify
           </Typography>
@@ -66,7 +66,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 {/* תפריט מותאם לפי תפקיד */}
                 {user.role === 'admin' ? (
                   <>
-                    <MenuItem onClick={() => handleMenuClose('/admin')}>Admin Dashboard</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/admin/change-roles')}>ניהול המשתמשים</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/admin/submission-status')}>Submission Status</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/register')}>Regiter New User</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/settings')}>Settings</MenuItem>

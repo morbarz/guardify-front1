@@ -8,7 +8,7 @@ import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import ManualScheduleAdjustment from './pages/ManualScheduleAdjustment';
-
+import Home from './pages/Home'
 // Lazy load components
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -26,6 +26,7 @@ const CurrentSubmission = lazy(() => import('./pages/CurrentSubmission'));
 const SubmissionHistory = lazy(() => import('./pages/SubmissionHistory'));
 const ScheduleResultPage = lazy(() => import('./pages/ScheduleResultPage'));
 const AllSchedulesPage = lazy(() => import('./pages/AllSchedulePage')); // Fixed typo in import path
+const UserRolesPage = lazy(() => import('./pages/UserRolesPage'));
 // Create a theme
 const theme = createTheme({
   palette: {
@@ -59,8 +60,11 @@ const App: React.FC = () => {
                     {/* Public Routes */}
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<AdminRoute><Register /></AdminRoute>} />
-                    <Route path="/" element={<HomeRedirect />} />
+                    {/* Public landing page */}
+                    <Route path="/" element={<Home />} />
 
+                    {/* Redirect logic after login */}
+                    <Route path="/redirect" element={<HomeRedirect />} />
                     {/* Protected for all authenticated users */}
                     <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
                     <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
@@ -77,6 +81,9 @@ const App: React.FC = () => {
                     {/* Admin-only Routes */}
                     <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
                     <Route path="/admin/submission-status" element={<AdminRoute><AdminSubmissionStatus /></AdminRoute>} />
+                    <Route path="/admin/change-roles" element={<AdminRoute><UserRolesPage /></AdminRoute>} />
+
+            
                     <Route path="/admin/submitted-preferences" element={<AdminRoute><AdminPreferenceList /></AdminRoute>} />
                     <Route path="/admin/schedule/:id" element={<AdminRoute><ScheduleResultPage /></AdminRoute>} />
                     <Route path="/admin/schedules" element={<AdminRoute><AllSchedulesPage /></AdminRoute>} />
