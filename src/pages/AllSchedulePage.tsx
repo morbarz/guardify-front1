@@ -20,7 +20,7 @@ import {
   DialogContentText
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { adminService } from '../services/api';
 import { GeneratedSchedule } from '../types/models';
@@ -46,17 +46,26 @@ const AllSchedulesPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await adminService.getAllGeneratedSchedules();
+      
+      if (!response) {
+        throw new Error('No response received from server');
+      }
+
       if (response.success && response.data?.schedules) {
         setSchedules(response.data.schedules);
         setError(null);
       } else {
         setSchedules([]);
-        setError(response.message || 'Failed to fetch schedules');
+        setError(response.message || 'Failed to fetch schedules. Please try again later.');
       }
     } catch (err) {
       console.error('❌ Failed to fetch schedules:', err);
       setSchedules([]);
-      setError('Failed to load schedules');
+      if (err instanceof Error) {
+        setError(`Failed to load schedules: ${err.message}`);
+      } else {
+        setError('An unexpected error occurred while loading schedules');
+      }
     } finally {
       setLoading(false);
     }
@@ -142,6 +151,12 @@ const AllSchedulesPage: React.FC = () => {
     }
   };
 
+  const formatDate = (dateString: string | null | undefined, formatString: string): string => {
+    if (!dateString) return 'לא זמין';
+    const date = new Date(dateString);
+    return isValid(date) ? format(date, formatString, { locale: he }) : 'תאריך לא תקין';
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -203,8 +218,8 @@ const AllSchedulesPage: React.FC = () => {
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Typography variant="h6">
-                      {format(new Date(schedule.startDate), 'dd/MM/yyyy', { locale: he })} -
-                      {format(new Date(schedule.endDate), 'dd/MM/yyyy', { locale: he })}
+                      {formatDate(schedule.startDate, 'dd/MM/yyyy')} -
+                      {formatDate(schedule.endDate, 'dd/MM/yyyy')}
                     </Typography>
                     <Chip
                       label={schedule.status === 'draft' ? 'טיוטה' : 'סופי'}
@@ -214,7 +229,7 @@ const AllSchedulesPage: React.FC = () => {
                   </Box>
 
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    נוצר: {format(new Date(schedule.createdAt), 'dd/MM/yyyy HH:mm', { locale: he })}
+                    נוצר: {formatDate(schedule.createdAt, 'dd/MM/yyyy HH:mm')}
                   </Typography>
 
                   <Stack direction="row" spacing={1} sx={{ mt: 2 }}>

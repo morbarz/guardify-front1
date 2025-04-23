@@ -177,17 +177,24 @@ export const preferencesService = {
       message?: string;
     }> => {
       try {
+        console.log('Fetching all generated schedules...');
         const response = await api.get('/schedule/all');
+        console.log('Received response:', response.data);
+        
+        if (!response.data) {
+          throw new Error('No data received in response');
+        }
+
         return {
           success: true,
           data: response.data
         };
-      } catch (error: any) {
-        console.error('❌ Failed to fetch all schedules:', error);
+      } catch (error) {
+        console.error('Error fetching schedules:', error);
         return {
           success: false,
           data: { schedules: [] },
-          message: error.response?.data?.error || 'Failed to fetch schedules'
+          message: error instanceof Error ? error.message : 'Failed to fetch schedules'
         };
       }
     },
