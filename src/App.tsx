@@ -27,6 +27,7 @@ const SubmissionHistory = lazy(() => import('./pages/SubmissionHistory'));
 const ScheduleResultPage = lazy(() => import('./pages/ScheduleResultPage'));
 const AllSchedulesPage = lazy(() => import('./pages/AllSchedulePage')); // Fixed typo in import path
 const UserRolesPage = lazy(() => import('./pages/UserRolesPage'));
+const ScheduleEditorPage = lazy(() => import('./pages/ScheduleEditorPage'))
 // Create a theme
 const theme = createTheme({
   palette: {
@@ -82,6 +83,7 @@ const App: React.FC = () => {
                     <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
                     <Route path="/admin/submission-status" element={<AdminRoute><AdminSubmissionStatus /></AdminRoute>} />
                     <Route path="/admin/change-roles" element={<AdminRoute><UserRolesPage /></AdminRoute>} />
+                    <Route path="/admin/schedule-editor" element={<AdminRoute><ScheduleEditorPage /></AdminRoute>} />
 
             
                     <Route path="/admin/submitted-preferences" element={<AdminRoute><AdminPreferenceList /></AdminRoute>} />

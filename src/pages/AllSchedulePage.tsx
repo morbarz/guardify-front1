@@ -2,56 +2,125 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  CircularProgress,
   Card,
   CardContent,
-  Stack,
+  Grid,
+  Button,
+  CircularProgress,
   Chip,
+  Stack,
   IconButton,
   Tooltip,
   useTheme,
   alpha,
-  Divider
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
 import { adminService } from '../services/api';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import { GeneratedSchedule } from '../types/models';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import DownloadIcon from '@mui/icons-material/Download';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 
 const AllSchedulesPage: React.FC = () => {
-  const [schedules, setSchedules] = useState<any[]>([]);
+  const [schedules, setSchedules] = useState<GeneratedSchedule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] = useState<GeneratedSchedule | null>(null);
   const navigate = useNavigate();
   const theme = useTheme();
 
   useEffect(() => {
-    const fetchSchedules = async () => {
-      try {
-        const res = await adminService.getAllGeneratedSchedules();
-        if (res.success) {
-          setSchedules(res.schedules);
-        }
-      } catch (err) {
-        console.error('❌ Failed to load schedules:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchSchedules();
   }, []);
+
+  const fetchSchedules = async () => {
+    try {
+      setLoading(true);
+      const response = await adminService.getAllGeneratedSchedules();
+      if (response.success && response.data?.schedules) {
+        setSchedules(response.data.schedules);
+        setError(null);
+      } else {
+        setSchedules([]);
+        setError(response.message || 'Failed to fetch schedules');
+      }
+    } catch (err) {
+      console.error('❌ Failed to fetch schedules:', err);
+      setSchedules([]);
+      setError('Failed to load schedules');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewSchedule = (schedule: GeneratedSchedule) => {
+    navigate(`/admin/schedule/${schedule._id}`, { state: { schedule } });
+  };
+
+  const handleEditSchedule = (schedule: GeneratedSchedule) => {
+    navigate(`/admin/schedule/${schedule._id}/edit`, { state: { schedule } });
+  };
+
+  const handleDeleteClick = (schedule: GeneratedSchedule) => {
+    setScheduleToDelete(schedule);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!scheduleToDelete) return;
+
+    try {
+      setLoading(true);
+      const response = await adminService.deleteSchedule(scheduleToDelete._id);
+      if (response.success) {
+        await fetchSchedules();
+        setError(null);
+      } else {
+        setError(response.message || 'Failed to delete schedule');
+      }
+    } catch (err) {
+      console.error('❌ Failed to delete schedule:', err);
+      setError('Failed to delete schedule');
+    } finally {
+      setLoading(false);
+      setDeleteDialogOpen(false);
+      setScheduleToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setScheduleToDelete(null);
+  };
+
+  const handleCreateSchedule = async () => {
+    try {
+      setLoading(true);
+      const response = await adminService.createSchedule();
+      if (response.success) {
+        await fetchSchedules();
+        navigate(`/admin/schedule/${response.scheduleId}`, {
+          state: { schedule: response.schedule }
+        });
+      } else {
+        setError(response.message || 'Failed to create schedule');
+      }
+    } catch (err) {
+      console.error('❌ Failed to create schedule:', err);
+      setError('Failed to create new schedule');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -60,15 +129,10 @@ const AllSchedulesPage: React.FC = () => {
           color: theme.palette.warning.main,
           backgroundColor: alpha(theme.palette.warning.main, 0.1)
         };
-      case 'published':
+      case 'final':
         return {
           color: theme.palette.success.main,
           backgroundColor: alpha(theme.palette.success.main, 0.1)
-        };
-      case 'archived':
-        return {
-          color: theme.palette.text.secondary,
-          backgroundColor: alpha(theme.palette.text.secondary, 0.1)
         };
       default:
         return {
@@ -76,12 +140,6 @@ const AllSchedulesPage: React.FC = () => {
           backgroundColor: alpha(theme.palette.info.main, 0.1)
         };
     }
-  };
-
-  const handleManualAdjust = (schedule: any) => {
-    navigate(`/admin/schedule/${schedule._id}/adjust`, {
-      state: { schedule }
-    });
   };
 
   if (loading) {
@@ -92,113 +150,134 @@ const AllSchedulesPage: React.FC = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" gutterBottom>
+            סידורי עבודה
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleCreateSchedule}
+            disabled={loading}
+          >
+            צור סידור חדש
+          </Button>
+        </Box>
+        <Typography color="error" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 3 }}>
-      <Card elevation={3}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-            <CalendarMonthIcon sx={{ fontSize: 28, mr: 1, color: theme.palette.primary.main }} />
-            <Typography variant="h5">
-              All Generated Schedules
-            </Typography>
-          </Box>
-          <Divider sx={{ mb: 3 }} />
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          סידורי עבודה
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={handleCreateSchedule}
+          disabled={loading}
+        >
+          צור סידור חדש
+        </Button>
+      </Box>
 
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Schedule Period</TableCell>
-                  <TableCell>Created</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {schedules.map((schedule) => {
-                  const statusStyle = getStatusColor(schedule.status);
-                  return (
-                    <TableRow 
-                      key={schedule._id}
-                      sx={{ '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.04) } }}
-                    >
-                      <TableCell>
-                        <Stack spacing={0.5}>
-                          <Typography variant="body2" color="text.secondary">
-                            {new Date(schedule.startDate).toLocaleDateString()} - {new Date(schedule.endDate).toLocaleDateString()}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            ID: {schedule._id}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {new Date(schedule.createdAt).toLocaleString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={schedule.status}
-                          size="small"
-                          sx={{
-                            color: statusStyle.color,
-                            bgcolor: statusStyle.backgroundColor,
-                            textTransform: 'capitalize'
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          <Tooltip title="View Schedule">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() =>
-                                navigate(`/admin/schedule/${schedule._id}`, {
-                                  state: { schedule },
-                                })
-                              }
-                            >
-                              <VisibilityIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Manual Adjustment">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handleManualAdjust(schedule)}
-                            >
-                              <PeopleAltIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Edit Schedule">
-                            <IconButton size="small" color="primary">
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Download Schedule">
-                            <IconButton size="small" color="primary">
-                              <DownloadIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete Schedule">
-                            <IconButton size="small" color="error">
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+      {schedules.length === 0 ? (
+        <Typography variant="body1" sx={{ textAlign: 'center', mt: 4 }}>
+          לא נמצאו סידורי עבודה
+        </Typography>
+      ) : (
+        <Grid container spacing={3}>
+          {schedules.map((schedule) => (
+            <Grid item xs={12} md={6} lg={4} key={schedule._id}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Typography variant="h6">
+                      {format(new Date(schedule.startDate), 'dd/MM/yyyy', { locale: he })} -
+                      {format(new Date(schedule.endDate), 'dd/MM/yyyy', { locale: he })}
+                    </Typography>
+                    <Chip
+                      label={schedule.status === 'draft' ? 'טיוטה' : 'סופי'}
+                      size="small"
+                      sx={getStatusColor(schedule.status)}
+                    />
+                  </Box>
+
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    נוצר: {format(new Date(schedule.createdAt), 'dd/MM/yyyy HH:mm', { locale: he })}
+                  </Typography>
+
+                  <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+                    <Tooltip title="צפה בסידור">
+                      <IconButton
+                        onClick={() => handleViewSchedule(schedule)}
+                        color="primary"
+                        size="small"
+                      >
+                        <VisibilityIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="ערוך סידור">
+                      <IconButton
+                        onClick={() => handleEditSchedule(schedule)}
+                        color="primary"
+                        size="small"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="מחק סידור">
+                      <IconButton
+                        onClick={() => handleDeleteClick(schedule)}
+                        color="error"
+                        size="small"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          מחיקת סידור עבודה
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            האם אתה בטוח שברצונך למחוק את סידור העבודה הזה? פעולה זו אינה ניתנת לביטול.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel} color="primary">
+            ביטול
+          </Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+            מחק
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
 
-export default AllSchedulesPage;
+export default AllSchedulesPage; 

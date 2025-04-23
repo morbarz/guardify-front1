@@ -67,6 +67,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 {user.role === 'admin' ? (
                   <>
                     <MenuItem onClick={() => handleMenuClose('/admin/change-roles')}>ניהול המשתמשים</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/admin/schedule-editor')}>עריכת הסידור </MenuItem>
+
                     <MenuItem onClick={() => handleMenuClose('/admin/submission-status')}>Submission Status</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/register')}>Regiter New User</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/settings')}>Settings</MenuItem>

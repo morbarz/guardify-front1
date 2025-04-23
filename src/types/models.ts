@@ -69,3 +69,27 @@ export interface AuthState {
   isLoading: boolean;
   error: string | null;
 } 
+export interface GeneratedSchedule {
+  _id: string;
+  startDate: string;
+  endDate: string;
+  firstWeek: DaySchedule[];
+  secondWeek: DaySchedule[];
+  unassignedGuards: string[];
+  status: 'draft' | 'final';
+  createdAt: string;
+}
+
+export interface DaySchedule {
+  day: number;
+  morning: (string | GuardAssignment)[];
+  noon: (string | GuardAssignment)[];
+  night: (string | GuardAssignment)[];
+}
+
+export interface GuardAssignment {
+  email: string;
+  name: string | undefined;
+  shiftType: string;
+  priority: number;
+}

@@ -30,11 +30,12 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import DownloadIcon from '@mui/icons-material/Download';
 import ShareIcon from '@mui/icons-material/Share';
 import { useAuth } from '../contexts/AuthContext';
-import { adminService } from '../services/api';
+import { adminService, scheduleService } from '../services/api';
 import axios from 'axios';
 import { useApi } from '../hooks/useApi';
 import { DashboardSkeleton } from '../components/skeletons/DashboardSkeleton';
 import { User } from '../types/models';
+import { scheduleSchema } from '../utils/validationSchemas';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -62,7 +63,7 @@ const Dashboard: React.FC = () => {
 
         // Fetch last schedule using the correct endpoint
         try {
-          const scheduleRes = await adminService.getLastSubmittedSchedule();
+          const scheduleRes = await scheduleService.getLastSubmittedSchedule();
           if (scheduleRes.success && scheduleRes.schedule) {
             setLastSchedule(scheduleRes.schedule);
           }

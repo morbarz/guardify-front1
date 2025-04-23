@@ -9,6 +9,7 @@ import {
   Schedule,
   RegisterResponse
 } from '../types';
+import { GeneratedSchedule } from '../types/models';
 
 const isDev = import.meta.env.DEV;
 
@@ -69,9 +70,34 @@ export const authService = {
   }
 };
 export const userService = {
-  getAll: async (): Promise<User[]> => {
-    const response = await api.get('/users');
-    return response.data;
+  getAll: async (): Promise<{
+    success: boolean;
+    data: { name: string; mail: string; role: string }[];
+    message?: string;
+  }> => {
+    try {
+      const response = await api.get('/users');
+      if (Array.isArray(response.data)) {
+        // Handle the current response format
+        return {
+          success: true,
+          data: response.data.map(user => ({
+            name: user.name,
+            mail: user.mail,
+            role: user.role
+          }))
+        };
+      }
+      // Handle the new response format
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Failed to fetch users:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.error || 'Failed to fetch users'
+      };
+    }
   },
   givePermission: async (mail: string, role: string): Promise<void> => {
     await api.post('/users/givePermission', { mail, role });
@@ -126,6 +152,46 @@ export const preferencesService = {
 
 };
   export const adminService = { 
+    deleteSchedule: async (scheduleId: string): Promise<{
+      success: boolean;
+      message?: string;
+    }> => {
+      try {
+        const response = await api.delete(`/schedule/${scheduleId}`);
+        return {
+          success: true,
+          message: 'Schedule deleted successfully'
+        };
+      } catch (error: any) {
+        console.error('❌ Failed to delete schedule:', error);
+        return {
+          success: false,
+          message: error.response?.data?.error || 'Failed to delete schedule'
+        };
+      }
+    },
+
+    getAllGeneratedSchedules: async (): Promise<{
+      success: boolean;
+      data: { schedules: GeneratedSchedule[] };
+      message?: string;
+    }> => {
+      try {
+        const response = await api.get('/schedule/all');
+        return {
+          success: true,
+          data: response.data
+        };
+      } catch (error: any) {
+        console.error('❌ Failed to fetch all schedules:', error);
+        return {
+          success: false,
+          data: { schedules: [] },
+          message: error.response?.data?.error || 'Failed to fetch schedules'
+        };
+      }
+    },
+
     toggleSubmissionPeriod: async (
       isOpen: boolean,
       scheduleStartDate?: string,
@@ -156,8 +222,88 @@ export const preferencesService = {
         newPassword,
       });
       return response.data;
+    },
+  
+  createSchedule: async (): Promise<{
+    success: boolean;
+    message: string;
+    scheduleId: string;
+    schedule: Schedule;
+  }> => {
+    try {
+      const response = await api.get('/schedule/createRandom');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Schedule creation failed:', error);
+      throw error;
     }
   }
+}
+  export const scheduleService = {
+    // Get latest schedule
+    getLatest: async (): Promise<any> => {
+      const response = await api.get('/schedule/latest');
+      console.log(response.data)
+      return response.data;
+    },
+  
+    // Update a specific shift with new guard
+    updateShift: async (
+      scheduleId: string,
+      dayIndex: number,
+      shiftType: string,
+      guard: { name: string; email: string }
+    ): Promise<any> => {
+      const response = await api.put(`/schedule/${scheduleId}/update-shift`, {
+        dayIndex,
+        shiftType,
+        guard,
+      });
+      return response.data;
+    },
+    getLatestGeneratedSchedule: async (): Promise<{
+      success: boolean;
+      data: GeneratedSchedule;
+      message?: string;
+    }> => {
+      try {
+        const response = await api.get('/schedule/latest');
+        return {
+          success: true,
+          data: response.data
+        };
+      } catch (error: any) {
+        console.error('❌ Failed to fetch latest schedule:', error);
+        return {
+          success: false,
+          data: null as any,
+          message: error.response?.data?.error || 'Failed to fetch schedule'
+        };
+      }
+    },
+    getLastSubmittedSchedule: async (): Promise<{
+      success: boolean;
+      schedule: Schedule | null;
+      message?: string;
+    }> => {
+      try {
+        const response = await api.get('/schedule/last-submited');
+        return {
+          success: true,
+          schedule: response.data
+        };
+      } catch (error: any) {
+        console.error('❌ Failed to get last submitted schedule:', error);
+        return {
+          success: false,
+          schedule: null,
+          message: error.response?.data?.message || 'Failed to load schedule'
+        };
+      }
+    }
+  }
+   
+  
     
 
 export default api;

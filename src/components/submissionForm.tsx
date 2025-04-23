@@ -32,7 +32,17 @@ const SubmissionForm: React.FC = () => {
     dateStr ? format(new Date(dateStr), "d 'ב'MMMM yyyy", { locale: he }) : '';
 
   const disableNonSundays = (date: Date) => {
-    return date.getDay() !== 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time part for accurate date comparison
+    
+    // Get the day number and ensure we're working with local time
+    const localDate = new Date(date);
+    const dayNumber = localDate.getDay();
+    
+    // For debugging
+    console.log('Checking date:', localDate.toISOString(), 'Day:', dayNumber);
+    
+    return dayNumber !== 0 || date < today;
   };
 
   const getDaysLeft = (): string | null => {
@@ -74,7 +84,18 @@ const SubmissionForm: React.FC = () => {
       return;
     }
 
-    if (startDate.getDay() !== 0) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (startDate < today) {
+      setError('יש לבחור תאריך עתידי בלבד');
+      return;
+    }
+
+    const dayNumber = startDate.getDay();
+    console.log('Selected date:', startDate, 'Day number:', dayNumber);
+    
+    if (dayNumber !== 0) {
       setError('יש לבחור תאריך שהוא יום ראשון בלבד');
       return;
     }
@@ -84,15 +105,26 @@ const SubmissionForm: React.FC = () => {
       return;
     }
 
-    const startStr = startDate.toISOString().split('T')[0];
-    const endStr = calculateEndDate(startDate);
+    // Format dates ensuring they're in local timezone
+    const startStr = new Date(startDate.getTime() - (startDate.getTimezoneOffset() * 60000))
+      .toISOString()
+      .split('T')[0];
+    
+    // Calculate end date in local timezone
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 13);
+    const endStr = new Date(endDate.getTime() - (endDate.getTimezoneOffset() * 60000))
+      .toISOString()
+      .split('T')[0];
 
     try {
+      console.log('Sending dates to backend:', { startStr, endStr });
       await adminService.toggleSubmissionPeriod(true, startStr, endStr);
-      setStartDate(null); // איפוס השדה
-      await fetchStatus(); // רענון סטטוס
+      setStartDate(null);
+      await fetchStatus();
       setSuccess(`ההגשה נפתחה מ־${formatDateHebrew(startStr)} ועד ${formatDateHebrew(endStr)}`);
     } catch (err: any) {
+      console.error('Submission toggle error:', err);
       setError(err.message || 'שגיאה בפתיחת ההגשה');
     }
   };
