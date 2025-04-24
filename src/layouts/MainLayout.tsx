@@ -41,8 +41,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="static">
-        <Toolbar>
+      <AppBar position="static" color="primary" elevation={4}>       
+         <Toolbar>
           <Typography
             variant="h6"
             component="div"
@@ -55,7 +55,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           {user ? (
             <>
               <Typography variant="body1" sx={{ mr: 2 }}>
-                המשתמש המחובר הוא: {user.name}
+                
               </Typography>
 
               <IconButton color="inherit" onClick={handleMenuClick}>
@@ -67,36 +67,31 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 {user.role === 'admin' ? (
                   <>
                     <MenuItem onClick={() => handleMenuClose('/admin/change-roles')}>ניהול המשתמשים</MenuItem>
-                    <MenuItem onClick={() => handleMenuClose('/admin/schedule-editor')}>עריכת הסידור </MenuItem>
-
-                    <MenuItem onClick={() => handleMenuClose('/admin/submission-status')}>Submission Status</MenuItem>
-                    <MenuItem onClick={() => handleMenuClose('/register')}>Regiter New User</MenuItem>
-                    <MenuItem onClick={() => handleMenuClose('/settings')}>Settings</MenuItem>
-                    <MenuItem onClick={() => handleMenuClose('/admin/schedules')}>All schedules</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/admin/schedule-editor')}>עריכת הסידור</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/admin/submission-status')}>סטטוס הגשות</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/register')}>רישום משתמש חדש</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/settings')}>הגדרות</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/admin/schedules')}>כל הסידורים</MenuItem>
                   </>
                 ) : (
                   <>
                     <MenuItem onClick={() => handleMenuClose('/my-shifts')}>המשמרות שלי</MenuItem>
-                    <MenuItem onClick={() => handleMenuClose('/submit/current')}>  הגשת משמרות </MenuItem>
-                    <MenuItem onClick={() => handleMenuClose('/submit/history')}>  היסטוריית הגשות </MenuItem>
-
+                    <MenuItem onClick={() => handleMenuClose('/submit/current')}>הגשת משמרות</MenuItem>
+                    <MenuItem onClick={() => handleMenuClose('/submit/history')}>היסטוריית הגשות</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/settings')}>הגדרות</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/my-schedule')}>סידור העבודה שלי</MenuItem>
                     <MenuItem onClick={() => handleMenuClose('/past-schedules')}>סידורים קודמים</MenuItem>
-
-
-
                   </>
                 )}
               </Menu>
 
               <Button color="inherit" onClick={handleLogout} sx={{ ml: 2 }}>
-                Logout
+                התנתקות
               </Button>
             </>
           ) : (
             <Button color="inherit" onClick={() => navigate('/login')}>
-              Login
+              התחברות
             </Button>
           )}
         </Toolbar>
@@ -109,7 +104,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <Box component="footer" sx={{ py: 3, bgcolor: 'background.paper' }}>
         <Container maxWidth="sm">
           <Typography variant="body2" color="text.secondary" align="center">
-            © {new Date().getFullYear()} Guardify. All rights reserved.
+            © {new Date().getFullYear()} גארדיפיי. כל הזכויות שמורות.
           </Typography>
         </Container>
       </Box>

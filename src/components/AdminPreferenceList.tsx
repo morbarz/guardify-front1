@@ -9,15 +9,24 @@ import {
   TableRow,
   TableCell,
   CircularProgress,
-  Alert
+  Alert,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from '@mui/material';
-import axios from 'axios';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { adminService } from '../services/api';
 
 interface PreferenceSummary {
+  _id: string;
   name: string;
   email: string;
   totalDays: number;
   submittedOn: string;
+  preferences: Array<{
+    day: number;
+    shiftIds: number[];
+  }>;
 }
 
 const AdminPreferenceList: React.FC = () => {
@@ -28,14 +37,22 @@ const AdminPreferenceList: React.FC = () => {
   useEffect(() => {
     const fetchPreferences = async () => {
       try {
-        const res = await axios.get('/preferences/all', { withCredentials: true });
-        const sorted = res.data.preferences.sort(
-          (a: PreferenceSummary, b: PreferenceSummary) =>
-            new Date(b.submittedOn).getTime() - new Date(a.submittedOn).getTime()
-        );
-        setData(sorted);
+        setLoading(true);
+        const response = await adminService.getAllPreferences();
+        console.log('Preferences response:', response);
+        if (response.success) {
+          const sorted = response.data.sort(
+            (a: PreferenceSummary, b: PreferenceSummary) =>
+              new Date(b.submittedOn).getTime() - new Date(a.submittedOn).getTime()
+          );
+          setData(sorted);
+          setError(null);
+        } else {
+          setError(response.message || 'Failed to load preferences');
+        }
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load preferences');
+        console.error('❌ Failed to fetch preferences:', err);
+        setError(err.message || 'An error occurred while fetching preferences');
       } finally {
         setLoading(false);
       }
@@ -43,6 +60,15 @@ const AdminPreferenceList: React.FC = () => {
 
     fetchPreferences();
   }, []);
+
+  const getShiftName = (shiftId: number) => {
+    switch (shiftId) {
+      case 0: return 'Morning';
+      case 1: return 'Noon';
+      case 2: return 'Night';
+      default: return 'Unknown';
+    }
+  };
 
   if (loading) {
     return (
@@ -77,22 +103,45 @@ const AdminPreferenceList: React.FC = () => {
                 <TableCell><strong>Email</strong></TableCell>
                 <TableCell><strong>Days Submitted</strong></TableCell>
                 <TableCell><strong>Submitted On</strong></TableCell>
+                <TableCell><strong>Details</strong></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.map((pref, i) => (
-                <TableRow key={i}>
+              {data.map((pref) => (
+                <TableRow key={pref._id}>
                   <TableCell>{pref.name}</TableCell>
                   <TableCell>{pref.email}</TableCell>
                   <TableCell>{pref.totalDays}</TableCell>
+                  <TableCell>{new Date(pref.submittedOn).toLocaleString()}</TableCell>
                   <TableCell>
-                    {new Date(pref.submittedOn).toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    <Accordion>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography>View Preferences</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Day</TableCell>
+                              <TableCell>Shifts</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {pref.preferences.map((day) => (
+                              <TableRow key={day.day}>
+                                <TableCell>Day {day.day}</TableCell>
+                                <TableCell>
+                                  {day.shiftIds
+                                    .map((value, index) => value === 1 ? getShiftName(index) : null)
+                                    .filter(Boolean)
+                                    .join(', ') || 'No shifts selected'}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </AccordionDetails>
+                    </Accordion>
                   </TableCell>
                 </TableRow>
               ))}

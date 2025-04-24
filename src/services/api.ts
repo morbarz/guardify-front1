@@ -144,11 +144,7 @@ export const preferencesService = {
     return response.data;
   },
 
-  // ✅ Admin: get all submitted preferences
-  getAllPreferences: async (): Promise<any> => {
-    const response = await api.get('/preferences/all');
-    return response.data;
-  },
+
 
 };
   export const adminService = { 
@@ -244,7 +240,69 @@ export const preferencesService = {
       console.error('❌ Schedule creation failed:', error);
       throw error;
     }
-  }
+  },
+
+  convertEmailsToNames: async (schedule: any): Promise<{
+    success: boolean;
+    schedule: any;
+    message?: string;
+  }> => {
+    try {
+      const response = await api.post('/schedule/convert-names', { schedule });
+      return {
+        success: true,
+        schedule: response.data.schedule || response.data
+      };
+    } catch (error: any) {
+      console.error('❌ Failed to convert emails to names:', error);
+      return {
+        success: false,
+        schedule: schedule,
+        message: error.response?.data?.message || 'Failed to convert emails to names'
+      };
+    }
+  },
+  getAllPreferences: async (): Promise<{
+    success: boolean;
+    data: Array<{
+      _id: string;
+      name: string;
+      email: string;
+      totalDays: number;
+      submittedOn: string;
+      preferences: Array<{
+        day: number;
+        shiftIds: number[];
+      }>;
+    }>;
+    message?: string;
+  }> => {
+    try {
+      const response = await api.get('/preferences/all');
+      console.log('Backend response:', response.data);
+      return {
+        success: true,
+        data: response.data.preferences.map((pref: any) => ({
+          _id: pref._id,
+          name: pref.name,
+          email: pref.email,
+          totalDays: pref.totalDays,
+          submittedOn: pref.submittedOn,
+          preferences: pref.schedule.map((day: number[], index: number) => ({
+            day: index + 1,
+            shiftIds: day
+          }))
+        }))
+      };
+    } catch (error: any) {
+      console.error('❌ Failed to fetch preferences:', error);
+      return {
+        success: false,
+        data: [],
+        message: error.response?.data?.message || 'Failed to fetch preferences'
+      };
+    }
+  },
 }
   export const scheduleService = {
     // Get latest schedule
@@ -294,7 +352,7 @@ export const preferencesService = {
       message?: string;
     }> => {
       try {
-        const response = await api.get('/schedule/last-submited');
+        const response = await api.get('/schedule/latest');
         return {
           success: true,
           schedule: response.data

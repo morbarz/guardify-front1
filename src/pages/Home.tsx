@@ -11,43 +11,44 @@ const Home: React.FC = () => {
       sx={{
         minHeight: '100vh',
         width: '100%',
-        backgroundColor: '#f5f5f5',
+        background: 'linear-gradient(to bottom right, #e3f2fd, #ffffff)',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         p: 2,
       }}
     >
       <Paper
-        elevation={4}
+        elevation={8}
         sx={{
-          maxWidth: 400,
+          maxWidth: 420,
           width: '100%',
           textAlign: 'center',
-          p: 4,
-          borderRadius: 4,
+          p: 5,
+          borderRadius: 5,
           backgroundColor: '#ffffff',
+          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
         }}
       >
         <img
           src="/guardify-landing.jpg"
           alt="סמל משמר בתי המשפט"
           style={{
-            width: '150px',
-            height: '150px',
-            objectFit: 'contain',
-            marginBottom: 20,
-            borderRadius: '12px',
+            width: '120px',
+            height: '120px',
+            objectFit: 'cover',
+            marginBottom: 24,
+            borderRadius: '50%',
+            border: '2px solid #1976d2',
           }}
         />
 
-        <Typography variant="h5" gutterBottom fontWeight="bold">
-          ברוך הבא ל־Guardify
+        <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
+          Guardify
         </Typography>
 
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          מערכת לניהול סידור עבודה של משמר בתי המשפט
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+          מערכת חכמה לניהול סידורי עבודה במשמר בתי המשפט
         </Typography>
 
         <Button
@@ -55,7 +56,7 @@ const Home: React.FC = () => {
           color="primary"
           fullWidth
           size="large"
-          sx={{ fontWeight: 'bold' }}
+          sx={{ fontWeight: 'bold', py: 1.5, fontSize: '1rem' }}
           onClick={() => navigate('/login')}
         >
           התחברות

@@ -5,6 +5,11 @@ import {
   Paper,
   Button,
   CircularProgress,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Divider,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import UserRoleManager from '../components/UserRoleManager';
@@ -18,18 +23,18 @@ const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // 🔐 גישה למנהלים בלבד
+  // גישה למנהלים בלבד
   if (!user || user.role !== 'admin') {
     return (
       <Box sx={{ p: 4 }}>
         <Typography variant="h6" color="error">
-          Access denied: Admins only.
+          גישה נדחתה: למנהלים בלבד.
         </Typography>
       </Box>
     );
   }
 
-  // 🛠️ יצירת סידור חדש
+  // יצירת סידור חדש
   const handleCreateSchedule = async () => {
     setLoading(true);
     try {
@@ -40,11 +45,11 @@ const AdminDashboard: React.FC = () => {
           state: { schedule: res.schedule },
         });
       } else {
-        alert('❌ Failed to create schedule: ' + res.message);
+        alert('נכשל ביצירת הסידור: ' + res.message);
       }
     } catch (error) {
-      console.error('❌ Failed to generate schedule:', error);
-      alert('Failed to generate schedule.');
+      console.error('נכשל בייצור הסידור:', error);
+      alert('נכשל בייצור הסידור.');
     } finally {
       setLoading(false);
     }
@@ -52,48 +57,68 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Admin Dashboard
+      <Typography variant="h4" gutterBottom align="center">
+        לוח בקרה למנהל
       </Typography>
 
-      <Typography variant="h6" gutterBottom>
-        Welcome, {user.name}!
+      <Typography variant="h6" gutterBottom align="center" sx={{ mb: 4 }}>
+        ברוך הבא, {user.name}!
       </Typography>
 
-      {/* 🔄 סטטוס פתיחה */}
-      <SubmissionStatus />
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={6}>
+          <Card elevation={3}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                סטטוס הגשות
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <SubmissionStatus />
+            </CardContent>
+          </Card>
+        </Grid>
 
-      {/* 🔘 כפתור יצירת סידור */}
-      <Box sx={{ my: 4 }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleCreateSchedule}
-          disabled={loading}
-        >
-          {loading ? (
-            <CircularProgress size={24} color="inherit" />
-          ) : (
-            'Create New Weekly Schedule'
-          )}
-        </Button>
-      </Box>
+        <Grid item xs={12} md={6}>
+          <Card elevation={3}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                יצירת סידור חדש
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                לחץ כאן ליצירת סידור שבועי חדש
+              </Typography>
+            </CardContent>
+            <CardActions>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleCreateSchedule}
+                disabled={loading}
+                fullWidth
+              >
+                {loading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  'צור סידור שבועי חדש'
+                )}
+              </Button>
+            </CardActions>
+          </Card>
+        </Grid>
 
-      {/* 👤 ניהול משתמשים
-      <Paper elevation={3} sx={{ mt: 4, p: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Manage Users
-        </Typography>
-        <UserRoleManager />
-      </Paper> */}
-
-      {/* 📋 הגשות המשתמשים */}
-      <Paper elevation={3} sx={{ mt: 4, p: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          All Submitted Preferences
-        </Typography>
-        <AdminPreferenceList />
-      </Paper>
+        <Grid item xs={12}>
+          <Card elevation={3}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                העדפות שהוגשו
+              </Typography>
+              <Divider sx={{ mb: 2 }} />
+              <AdminPreferenceList />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     </Box>
   );
 };
