@@ -37,13 +37,21 @@ const UserRoleManager: React.FC = () => {
     const fetchUsers = async () => {
       try {
         const response = await userService.getAll();
-        setUsers(response);
-        setFilteredUsers(response);
-        const roles: { [mail: string]: string } = {};
-        response.forEach((user) => {
-          roles[user.mail] = user.role;
-        });
-        setSelectedRoles(roles);
+        if (response.success && Array.isArray(response.data)) {
+          const typedUsers = response.data.map(user => ({
+            ...user,
+            role: user.role as "guard" | "bakar" | "shift_manager" | "admin"
+          }));
+          setUsers(typedUsers);
+          setFilteredUsers(typedUsers);
+          const roles: { [mail: string]: string } = {};
+          typedUsers.forEach((user) => {
+            roles[user.mail] = user.role;
+          });
+          setSelectedRoles(roles);
+        } else {
+          setError(response.message || 'Failed to fetch users');
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to fetch users');
       } finally {
